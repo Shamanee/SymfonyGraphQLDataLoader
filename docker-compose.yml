@@ -1,0 +1,30 @@
+version: '3.7'
+
+services:
+  app:
+    build:
+      target: app-dev
+      context: .
+    networks:
+      - frontend
+      - backend
+    volumes:
+      - .:/var/www/app/
+      - ./docker/vhosts:/etc/apache2/site-enabled:ro
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: /var/www/app/config/secrets/namkin-a6a0caf36f6d.json
+
+  mongo:
+    image: mongo
+    networks:
+      - backend
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+
+volumes:
+  db_data:
+
+networks:
+  frontend:
+  backend:

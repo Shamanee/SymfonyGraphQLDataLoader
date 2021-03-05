@@ -1,0 +1,97 @@
+ahoyapi: v2
+commands:
+  # Docker commands
+  exec:
+    cmd: ahoy dc exec -e SYMFONY_DEPRECATIONS_HELPER=weak app "$@"
+    usage: Exec command into the "app" container
+    hide: true
+
+  dc:
+    cmd: docker-compose "$@"
+    usage: Base docker-compose command
+    hide: true
+
+  tty:
+    cmd: ahoy exec sh
+    usage: Connects to the app container
+
+  build-prod:
+    cmd: docker build --target=app-prod --tag="$@" .
+    usage: Build a container tagged for production with a tag
+
+  start:
+    cmd: ahoy dc up -d "$@"
+    usage: Starts the containers
+
+  start-attached:
+    cmd: ahoy dc up
+    usage: Starts the containers in attached mode
+
+  stop:
+    cmd: ahoy dc stop "$@"
+    usage: Stops the containers
+
+  # App commands
+  exec-bin-console:
+    cmd: ahoy exec php bin/console "$@"
+    usage: Exec a symfony command
+    hide: true
+
+  ## Tests
+  tests:
+    cmd: docker-compose exec -T -e SYMFONY_DEPRECATIONS_HELPER=weak app php bin/phpunit
+    usage: Run all the tests
+
+  test-complete:
+    cmd : |
+      docker-compose exec -T app php bin/console c:c --env=test
+      docker-compose exec -T -e SYMFONY_DEPRECATIONS_HELPER=weak app chmod -R 777 var/cache
+      docker-compose exec -T -e SYMFONY_DEPRECATIONS_HELPER=weak app chmod -R 777 var/log
+      docker-compose exec -T app php bin/console doctrine:mongodb:schema:drop  -e test
+      docker-compose exec -T app php bin/console doctrine:mongodb:schema:create  -e test
+      docker-compose exec -T app php bin/console doctrine:mongodb:schema:update -e test -n
+      docker-compose exec -T app php bin/console doctrine:mongodb:fixtures:load -n  -e test
+      docker-compose exec -T -e SYMFONY_DEPRECATIONS_HELPER=weak app php bin/phpunit
+    usage: Reset the test database and run all the tests
+
+  cache-clear:
+    cmd: |
+      ahoy exec-bin-console c:c
+      ahoy exec chmod -R 777 var/cache
+      ahoy exec chmod -R 777 var/log
+
+  ## Database
+  db-reset:
+    cmd: |
+      ahoy exec-bin-console doctrine:mongodb:schema:drop
+      ahoy exec-bin-console doctrine:mongodb:schema:create
+      ahoy exec-bin-console doctrine:mongodb:schema:update -n
+    usage: Reset the dev DB
+
+  db-reset-fixtures:
+    cmd: |
+      ahoy db-reset
+      ahoy exec-bin-console doctrine:mongodb:fixtures:load -n
+    usage: Reset the dev DB and load the fixtures
+
+  test-db-refresh:
+    cmd: |
+      docker-compose exec -T app php bin/console doctrine:mongodb:schema:drop  -e test
+      docker-compose exec -T app php bin/console doctrine:mongodb:schema:create  -e test
+      docker-compose exec -T app php bin/console doctrine:mongodb:schema:update -e test -n
+      docker-compose exec -T app php bin/console doctrine:mongodb:fixtures:load -n  -e test
+    usage: Reset the test database
+
+  ## Asset management
+  deps:
+    cmd: |
+      docker-compose exec -T app composer install -q --no-ansi --no-interaction --no-scripts --no-suggest --no-progress --prefer-dist
+      docker-compose exec -T app php bin/console assets:install public
+    usage: Install php dependencies (composer and other assets)
+
+  perms:
+    cmd: |
+      ahoy exec chmod -R 777 var/cache
+      ahoy exec chmod -R 777 var/log
+      ahoy exec chmod -R 777 public/uploads
+    usage: setup permissions for log, uploads and cache directories

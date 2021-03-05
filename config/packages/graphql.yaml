@@ -1,0 +1,20 @@
+overblog_graphql:
+    definitions:
+        schema:
+            query: Query
+        mappings:
+            types:
+                -
+                    type: yaml
+                    dir: "%kernel.project_dir%/config/graphql/types"
+                    suffix: null
+    services:
+        promise_adapter: "webonyx_graphql.sync_promise_adapter"
+
+overblog_dataloader:
+    defaults:
+        promise_adapter: "overblog_dataloader.webonyx_graphql_sync_promise_adapter"
+    loaders:
+        authors:
+            alias: "authors_loader"
+            batch_load_fn: "@app.graph.authors_loader:all"

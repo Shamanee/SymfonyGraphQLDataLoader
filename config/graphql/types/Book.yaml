@@ -1,0 +1,11 @@
+Book:
+  type: object
+  config:
+    fields:
+      id:
+        type: "ID!"
+      name:
+        type: "String"
+      author:
+        type: "Author!"
+        resolve: '@=resolver("App\\Graphql\\Resolver\\AuthorResolver::resolverAuthor", [value])'

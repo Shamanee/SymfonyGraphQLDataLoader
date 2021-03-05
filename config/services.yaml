@@ -4,6 +4,8 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
 parameters:
+    env(MONGODB_URL): ''
+    env(MONGODB_DB): ''
 
 services:
     # default configuration for services in *this* file
@@ -27,5 +29,18 @@ services:
         resource: '../src/Controller/'
         tags: ['controller.service_arguments']
 
-    # add more service definitions when explicit configuration is needed
-    # please note that last definitions always *replace* previous ones
+#    App\GraphQL\Resolver\:
+#        resource: '../src/GraphQL/Resolver'
+#        tags: [ 'overblog_graphql.resolver' ]
+
+    app.graph.author_repository:
+        class: App\Repository\AuthorRepository
+        factory: [ "@doctrine_mongodb.odm.document_manager", getRepository ]
+        arguments:
+            - App\Document\Author
+
+    app.graph.authors_loader:
+        class: App\GraphQL\Loader\AuthorLoader
+        arguments:
+            - "@overblog_graphql.promise_adapter"
+            - "@app.graph.author_repository"
